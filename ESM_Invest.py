@@ -1,27 +1,65 @@
 from Tkinter import *
 from tkFileDialog import askdirectory
 from tkMessageBox import askyesno
-import os, fnmatch, shutil, subprocess, psycopg2, glob
+import os, fnmatch, shutil, subprocess, psycopg2, glob, codecs, configparser
 from ESM_dictionaries import dict
 import tkMessageBox
 
-temp = "C:\\temp\general"
+config = configparser.ConfigParser()
+config.read('settings.ini')
+
+temp = config.get('settings', 'temporary_folder')
+initial_directory = config.get('settings','initial_directory')
+all_folder = config.get('settings','all_folder')
+new_folder = config.get('settings','new_folder')
+all_list = config.get('settings','all_list')
+server = config.get('settings','server')
+
+class dbn:
+    def client(self):
+        root = Tk()
+        v = IntVar()
+        
+        Label(root, text="""Pick a client:""", justify=LEFT, padx=20).pack()
+        Radiobutton(root, text="NISSAN", padx=20, variable=v, value=1).pack(anchor=W)
+        Radiobutton(root, text="RENAULT TRUCKS", padx=20, variable=v, value=2).pack(anchor=W)
+        
+        def selection():
+            global a
+            selection = int(v.get())
+            if selection == 1:
+                a = 'filelist'
+            else:
+                a = 'filelist_RT'
+            
+            root.destroy()
+            print a
+        
+                
+        Button(root, text="OK", command=selection).pack(side=RIGHT)
+        root.mainloop()
+        return a 
+
+y = dbn()
+db_name = str(y.client())
+print "Database: %s" %db_name
 
 class esm_invest:
     def getpath(self):
+        
         Tk().withdraw()
     
         options = {}
-        options['initialdir'] = "B:\DTP DEPARTMENT\_Projects MOCA"
+        options['initialdir'] = initial_directory
         options['title'] = 'ESM Files Investigation'
     
         fp = askdirectory(**options)
-        filePath = fp + "/_Illustration investigation/__ALL"
+        filePath = fp + all_folder
         return filePath
     
     def new_path(self, filePath):
         p = filePath[:-5]
-        np = p + "_NEW"
+        np = p + new_folder
 #        print "new_path(filePath): %s" %np
         return np
     
@@ -36,8 +74,9 @@ class esm_invest:
 
     def write_all_txt(self, list, path):
         fpa = path[:-5]
-        alltxt = os.path.join(fpa, "all.txt")
+        alltxt = os.path.join(fpa, all_list)
         f = open(alltxt, 'w')
+        f.write(codecs.BOM_UTF8) # this will set the encode of the file as UTF-8
         for item in list:
             f.write("%s\n" %item)
         f.close()
@@ -67,7 +106,11 @@ class esm_invest:
                 a = True
             else:
                 connmsg = "This project has connectors."
-                a = False
+                if askyesno("ESM Investigation", 
+                                "%s\n\nDo you have .svg files corresponding to these connectors?" %(connmsg)):
+                    a = True
+                else:
+                    a = False
             for file in os.listdir(filePath):
                 if file.lower().startswith("jr"):
                     jr_list.append(file)
@@ -198,7 +241,7 @@ class esm_invest:
         return new_files, len(new_files)
 
     def search_file(self, table, filename):
-        conn = esm_invest().establishConnection('filelist')
+        conn = esm_invest().establishConnection(db_name)
         cur = conn.cursor()
         cur.execute("""SELECT exists (SELECT 1 FROM %s WHERE filename ~* '%s' LIMIT 1);""" %(table, filename))
         exists = cur.fetchone()[0]
@@ -206,7 +249,7 @@ class esm_invest:
         return exists
 
     def establishConnection(self, db):
-        conn = psycopg2.connect("dbname='%s' user='postgres' host='localhost' password='123456'" %db)
+        conn = psycopg2.connect("dbname='%s' user='postgres' host='%s' password='123456'" %(db, server))
         return conn
     
     def languages(self):
@@ -288,9 +331,9 @@ class esm_invest:
         for f in files:
             os.remove(f)
                         
-                        
-           
+        
 x = esm_invest()
+print "Database: %s" %db_name
 
 path = x.getpath()
 ''' Uncomment the following 2 lines to make the application fully functional.'''

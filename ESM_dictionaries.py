@@ -40,5 +40,9 @@ dict = {
                        11 : ('romanian', 'RO', 'RO'),
                        12 : ('russian', 'RU', 'RU'),
                        13 : ('spanish', 'SP', 'SP')
-                      }
+                      },
+        'clients' : {
+                        1 : ('NISSAN', 'filelist'),
+                        2 : ('RENAULT TRUCKS', 'filelist_RT')
+                    }
         }
