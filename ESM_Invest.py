@@ -14,6 +14,7 @@ all_folder = config.get('settings','all_folder')
 new_folder = config.get('settings','new_folder')
 all_list = config.get('settings','all_list')
 server = config.get('settings','server')
+pwd = config.get('settings','password')
 
 class dbn:
     def client(self):
@@ -249,7 +250,7 @@ class esm_invest:
         return exists
 
     def establishConnection(self, db):
-        conn = psycopg2.connect("dbname='%s' user='postgres' host='%s' password='123456'" %(db, server))
+        conn = psycopg2.connect("dbname='%s' user='postgres' host='%s' password='%s'" %(db, server, pwd))
         return conn
     
     def languages(self):
